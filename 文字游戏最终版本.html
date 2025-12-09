@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沉浸式果冻AI剧场 Ultimate</title>
+    <style>
+        :root {
+            --primary: #ff9a9e;
+            --accent: #a18cd1;
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-main: #5c5c5c;
+            --bubble-me: #a18cd1;
+            --bubble-ai: #ffffff;
+            --gradient-bg: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+
+        body {
+            background-image: var(--gradient-bg);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        /* ---------------- APP 容器 ---------------- */
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 95vh;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid var(--glass-border);
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ---------------- 顶部栏 ---------------- */
+        .header {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        .header h1 { font-size: 16px; color: #444; font-weight: 700; letter-spacing: 1px; }
+        .status-bar { font-size: 10px; color: var(--accent); opacity: 0; transition: opacity 0.3s; }
+        
+        .icon-btn {
+            background: rgba(255,255,255,0.5);
+            border: 1px solid #fff;
+            border-radius: 50%;
+            width: 32px; height: 32px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 16px;
+        }
+        .icon-btn:hover { background: #fff; transform: scale(1.1); }
+
+        /* ---------------- 聊天区域 ---------------- */
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        /* 消息体 */
+        .message-group {
+            display: flex;
+            gap: 10px;
+            max-width: 90%;
+            animation: slideIn 0.3s ease-out;
+        }
+        .message-group.me { align-self: flex-end; flex-direction: row-reverse; }
+        
+        /* 头像与名字 */
+        .avatar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 45px;
+            flex-shrink: 0;
+        }
+        .avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background-color: #ddd;
+            background-size: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .char-name {
+            font-size: 10px;
+            color: #666;
+            margin-top: 4px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 50px;
+            background: rgba(255,255,255,0.5);
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+
+        /* 气泡 */
+        .bubble {
+            background: #fff;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: relative;
+            word-wrap: break-word;
+        }
+        .message-group.me .bubble {
+            background: linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%);
+            color: #fff;
+            border-top-right-radius: 4px;
+        }
+        .message-group:not(.me) .bubble {
+            border-top-left-radius: 4px;
+        }
+
+        /* 旁白样式 */
+        .narrator {
+            align-self: center;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px dashed var(--primary);
+            color: #666;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            text-align: center;
+            margin: 10px 0;
+            max-width: 90%;
+        }
+
+        /* ---------------- 底部功能区 ---------------- */
+        .fake-tools {
+            display: flex;
+            gap: 15px;
+            padding: 8px 15px;
+            overflow-x: auto;
+            background: rgba(255,255,255,0.3);
+            border-top: 1px solid rgba(255,255,255,0.4);
+        }
+        .tool-btn { font-size: 18px; cursor: pointer; opacity: 0.7; transition: 0.2s; min-width: 30px; text-align: center;}
+        .tool-btn:hover { opacity: 1; transform: scale(1.1); }
+
+        .input-area {
+            background: rgba(255,255,255,0.6);
+            padding: 10px;
+            border-top: 1px solid rgba(255,255,255,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-row { display: flex; gap: 8px; justify-content: space-between; }
+        
+        textarea {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            padding: 10px;
+            background: rgba(255,255,255,0.8);
+            resize: none;
+            outline: none;
+            transition: height 0.2s;
+        }
+        textarea:focus { background: #fff; height: 70px; }
+
+        .btn {
+            border: none;
+            padding: 0 15px;
+            height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .btn-send { background: var(--accent); }
+        .btn-ai { background: var(--primary); }
+        .btn-auto { background: #667eea; width: 100%; margin-top: 5px; opacity: 0.9; }
+
+        /* 角色选择器 */
+        .char-selector {
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: rgba(255,255,255,0.9);
+            font-size: 12px;
+            outline: none;
+            max-width: 100px;
+        }
+
+        /* ---------------- 设置面板 (Modal) ---------------- */
+        .modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            animation: fadeIn 0.3s;
+        }
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal-section { margin-bottom: 25px; }
+        .section-title { font-size: 14px; font-weight: bold; color: var(--accent); margin-bottom: 10px; border-left: 3px solid var(--accent); padding-left: 8px; display: flex; justify-content: space-between; align-items: center;}
+
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 11px; color: #888; margin-bottom: 4px; }
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 12px;
+        }
+        
+        .char-list-item {
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-small { padding: 4px 8px; font-size: 10px; background: #ddd; color: #333; border-radius: 4px; cursor: pointer; border: none; }
+        .btn-save { width: 100%; padding: 12px; font-size: 14px; background: var(--gradient-bg); color: #fff; border:none; border-radius: 12px; margin-top: 10px; box-shadow: 0 5px 15px rgba(161, 140, 209, 0.3); cursor: pointer;}
+
+        /* 开关样式 */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute; content: "";
+            height: 16px; width: 16px;
+            left: 2px; bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        /* NPC 悬浮菜单 */
+        .npc-menu {
+            position: absolute; bottom: 80px; right: 10px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: none; flex-direction: column;
+            width: 120px;
+            overflow: hidden;
+            z-index: 50;
+        }
+        .npc-option { padding: 10px; font-size: 12px; cursor: pointer; text-align: center; border-bottom: 1px solid #eee; }
+        .npc-option:hover { background: #f0f0f0; }
+
+        /* 消息操作菜单 */
+        .msg-menu {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 20;
+            overflow: hidden;
+            min-width: 120px;
+        }
+        .msg-menu-item {
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #333;
+        }
+        .msg-menu-item:hover {
+            background: #f5f5f5;
+        }
+
+        /* 多选模式样式 */
+        .msg-checkbox {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 16px;
+            height: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            display: none; /* 默认隐藏 */
+        }
+        .msg-checkbox.visible {
+            display: block;
+        }
+        .msg-checkbox.checked {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            text-align: center;
+            line-height: 16px;
+            font-size: 12px;
+            content: "✓";
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <button class="icon-btn" onclick="openSettings()">⚙️</button>
+        <div style="text-align: center;">
+            <h1 id="ui-title">粉色回忆</h1>
+            <div id="status-bar" class="status-bar">AI思考中...</div>
+        </div>
+        <button class="icon-btn" onclick="toggleNPC()">👥</button>
+    </div>
+
+    <div class="npc-menu" id="npc-menu">
+        <div class="npc-option" onclick="triggerNPC('捧场')">✨ 捧场NPC</div>
+        <div class="npc-option" onclick="triggerNPC('好人')">😇 好人NPC</div>
+        <div class="npc-option" onclick="triggerNPC('坏人')">😈 坏人NPC</div>
+        <div class="npc-option" onclick="triggerNPC('普通')">😐 普通NPC</div>
+        <div class="npc-option" onclick="triggerNPC('情敌', true)">😡 情敌NPC</div>
+    </div>
+
+    <div class="chat-area" id="chat-area">
+        <div class="narrator">系统：欢迎来到你的专属世界。请在设置中配置API和角色。</div>
+    </div>
+
+    <div class="fake-tools">
+        <div class="tool-btn" onclick="handleTool('transfer')" title="伪造转账">💰</div>
+        <div class="tool-btn" onclick="handleTool('link')" title="伪造链接">🔗</div>
+        <div style="width:1px; background:rgba(255,255,255,0.5); margin:0 5px;"></div>
+        <div class="tool-btn" onclick="handleTool('image')" title="发送图片">🖼️</div>
+        <div class="tool-btn" onclick="handleTool('location')" title="发送定位">📍</div>
+        <div class="tool-btn" onclick="handleTool('file')" title="发送文件">📁</div>
+        <div class="tool-btn" onclick="handleTool('music')" title="发送音乐">🎵</div>
+    </div>
+
+    <div class="input-area">
+        <button class="btn btn-auto" onclick="autoAdvance()">🎬 自动推进剧情 (AI生成旁白)</button>
+        <textarea id="user-input" placeholder="输入你想说的话..."></textarea>
+        <div class="control-row">
+            <div style="display:flex; align-items:center; gap:5px;">
+                <span style="font-size:10px; color:#888;">AI扮演:</span>
+                <select id="char-select" class="char-selector">
+                </select>
+                <!-- 新增：多选按钮 -->
+                <button class="btn" style="background:#999; font-size:12px; padding:0 10px;" onclick="toggleMultiSelect()">多选</button>
+            </div>
+            <div style="display:flex; gap:5px;">
+                <button class="btn btn-ai" onclick="generateReply()">✨ AI回复</button>
+                <button class="btn btn-send" onclick="sendUserMessage()">🚀 发送</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settings-modal">
+        <div class="modal-header">
+            <h3>⚙️ 剧场设置</h3>
+            <button class="icon-btn" onclick="closeSettings()">✕</button>
+        </div>
+        <div class="modal-content">
+            
+            <div class="modal-section">
+                <div class="section-title">🔌 API 设置</div>
+                <div class="input-group">
+                    <label>API Key (sk-...)</label>
+                    <input type="password" id="api-key">
+                </div>
+                <div class="input-group">
+                    <label>API 地址 (Base URL)</label>
+                    <input type="text" id="api-url" value="https://api.openai.com/v1" placeholder="例如 https://api.deepseek.com">
+                </div>
+                <div class="input-group">
+                    <label>选择模型</label>
+                    <div style="display:flex; gap:5px;">
+                        <select id="api-model">
+                            <option value="gpt-3.5-turbo">gpt-3.5-turbo (默认)</option>
+                            <option value="gpt-4">gpt-4</option>
+                        </select>
+                        <button class="btn-small" onclick="fetchModels()">🔄 拉取模型列表</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <div class="section-title">
+                    🧠 记忆管理
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="memory-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <p style="font-size:10px; color:#888; margin-bottom:5px;">开启后，AI会自动总结过往剧情。总结内容将被作为长期记忆，参与AI的每一次思考。</p>
+            </div>
+
+            <div class="modal-section" style="border: 1px solid #ffe5e5; padding: 10px; border-radius: 8px; background: #fffafb;">
+                <div class="section-title" style="color:#d63384; border-color:#d63384;">🎭 旁白与描写设置 (AI必须遵守)</div>
+                <div class="input-group">
+                    <label>说话前的描写规则 (控制心理、外貌、神情)</label>
+                    <textarea id="narration-prompt" rows="4" placeholder="设置AI说话前的描写习惯...">请严格遵守：在进行对话回复前，必须先用括号()包裹一段描写。
+描写内容必须包含：你当前内心的真实心理活动、细微的面部神情变化、肢体动作以及周围场景的氛围感。
+例如：(手指微微颤抖，眼神躲闪不敢看你，心里却在期待你的挽留)
+描写结束后换行，再说出台词。</textarea>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <div class="section-title">🌍 世界观设定</div>
+                <div class="input-group">
+                    <label>世界背景 / 故事大纲 (包含情敌设定)</label>
+                    <textarea id="world-setting" rows="3" placeholder="例如：这是一个魔法学院。注意：故事里有一个叫XX的情敌，经常会出来捣乱..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label>自动剧情推进风格</label>
+                    <input type="text" id="plot-style" placeholder="例如：悬疑、浪漫、搞笑...">
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <div class="section-title">👤 我的信息</div>
+                <div class="input-group">
+                    <label>我的昵称</label>
+                    <input type="text" id="user-name" value="我">
+                </div>
+                <div class="input-group">
+                    <label>我的头像URL</label>
+                    <input type="text" id="user-avatar" value="https://api.dicebear.com/7.x/micah/svg?seed=Molly">
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <div class="section-title">🎭 AI 角色管理 (点击保存生效)</div>
+                <div id="char-list">
+                </div>
+                <button class="btn-small" onclick="addNewChar()" style="width:100%; margin-top:5px;">+ 添加新角色</button>
+            </div>
+
+            <div class="modal-section">
+                <div class="input-group">
+                    <label>聊天框标题</label>
+                    <input type="text" id="chat-title-input" value="粉色回忆">
+                </div>
+                <div class="input-group">
+                    <label>背景图片URL</label>
+                    <input type="text" id="bg-img-input" placeholder="http://...">
+                </div>
+            </div>
+            
+            <div style="height: 50px;"></div> 
+        </div>
+        <div style="padding:15px; border-top:1px solid #eee; background:rgba(255,255,255,0.9);">
+            <button class="btn-save" onclick="saveSettings()">💾 保存所有设置</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------------- 数据状态 ----------------
+    let config = {
+        apiKey: '',
+        apiUrl: 'https://api.openai.com/v1',
+        model: 'gpt-3.5-turbo',
+        worldview: '现代都市背景，温馨浪漫的日常故事。',
+        plotStyle: '轻松愉快',
+        userName: '软软',
+        userAvatar: 'https://api.dicebear.com/7.x/micah/svg?seed=Molly',
+        narrationRule: '', 
+        enableMemory: true,
+        characters: [
+            {
+                id: 1,
+                name: '哥哥',
+                avatar: 'https://api.dicebear.com/7.x/micah/svg?seed=Felix',
+                prompt: '你是一个温柔的邻家哥哥，总是宠溺地看着妹妹。'
+            }
+        ],
+        messages: [] // 短期上下文
+    };
+
+    let longTermMemory = ""; // 长期记忆存储
+    // 新增：多选相关全局变量
+    let multiSelectMode = false;
+    let selectedMsgIds = new Set();
+    let currentMenu = null; // 当前打开的操作菜单
+
+    // ---------------- UI 初始化与渲染 ----------------
+    const chatArea = document.getElementById('chat-area');
+    const charSelect = document.getElementById('char-select');
+    const npcMenu = document.getElementById('npc-menu');
+
+    function init() {
+        // 读取默认值到UI
+        document.getElementById('narration-prompt').value = `请严格遵守：在进行对话回复前，必须先用括号()包裹一段描写。
+描写内容必须包含：你当前内心的真实心理活动、细微的面部神情变化、肢体动作以及周围场景的氛围感。
+例如：(手指微微颤抖，眼神躲闪不敢看你，心里却在期待你的挽留)
+描写结束后换行，再说出台词。`;
+        
+        renderCharSettings();
+        updateCharSelect();
+    }
+
+    // 渲染设置面板里的角色列表
+    function renderCharSettings() {
+        const container = document.getElementById('char-list');
+        container.innerHTML = '';
+        config.characters.forEach((char, index) => {
+            const div = document.createElement('div');
+            div.className = 'char-list-item';
+            div.innerHTML = `
+                <div style="flex:1;">
+                    <input type="text" placeholder="名字" value="${char.name}" onchange="updateChar(${index}, 'name', this.value)" style="margin-bottom:5px; font-weight:bold;">
+                    <input type="text" placeholder="头像URL" value="${char.avatar}" onchange="updateChar(${index}, 'avatar', this.value)" style="margin-bottom:5px;">
+                    <textarea placeholder="人设/性格/秘密" onchange="updateChar(${index}, 'prompt', this.value)" rows="2">${char.prompt}</textarea>
+                </div>
+                <button class="btn-small" style="background:#ff9a9e; color:white;" onclick="removeChar(${index})">删</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updateCharSelect() {
+        charSelect.innerHTML = '';
+        config.characters.forEach((char, index) => {
+            const opt = document.createElement('option');
+            opt.value = index;
+            opt.text = char.name;
+            charSelect.appendChild(opt);
+        });
+    }
+
+    // ---------------- 核心逻辑：聊天与API ----------------
+    function sendUserMessage() {
+        const input = document.getElementById('user-input');
+        const text = input.value.trim();
+        if(!text) return;
+
+        appendMessage(config.userName, config.userAvatar, text, true);
+        config.messages.push({role: 'user', content: `${config.userName}: ${text}`});
+        input.value = '';
+        
+        checkMemory(); // 检查是否需要压缩记忆
+    }
+
+    // ------------------- 修改：工具栏逻辑 (支持自定义内容) -------------------
+    function handleTool(type) {
+        let content = "";
+        let displayHtml = "";
+        
+        // 1. 需要玩家输入的工具（转账/链接）
+        if (type === 'transfer') {
+            const amount = prompt("请输入转账金额 (例如 5200):", "520.00");
+            if(amount === null) return;
+            const note = prompt("请输入转账备注:", "拿去花");
+            if(note === null) return;
+            displayHtml = `<div style="background:#fa9d3b; color:white; padding:10px; border-radius:8px;">
+                            <div style="font-size:12px;">💰 转账给对方</div>
+                            <div style="font-size:18px; font-weight:bold;">¥${amount}</div>
+                            <div style="font-size:12px; opacity:0.8;">备注：${note}</div>
+                           </div>`;
+            content = `[系统消息：${config.userName} 向你转账了 ${amount} 元，备注：${note}]`;
+        } 
+        else if (type === 'link') {
+            const title = prompt("请输入链接标题:", "点击查看");
+            if(title === null) return;
+            const url = prompt("请输入网址URL:", "http://");
+            if(url === null) return;
+            displayHtml = `<div style="background:#f0f0f0; padding:10px; border-radius:5px; border-left:4px solid #aaa;">
+                            <div style="font-weight:bold;">🔗 ${title}</div>
+                            <div style="font-size:10px; color:blue;">${url}</div>
+                           </div>`;
+            content = `[系统消息：${config.userName} 分享了一个链接：${title} (${url})]`;
+        }
+        // 2. 可自定义内容的工具（图片/位置/文件/音乐）
+        else {
+            const toolConfig = {
+                'image': { text: '发送了一张图片', icon: '🖼️', color: '#ff9a9e', placeholder: '图片描述（如：海边日落）' },
+                'location': { text: '共享了位置', icon: '📍', color: '#a18cd1', placeholder: '位置描述（如：XX咖啡馆）' },
+                'file': { text: '发送了一个文件', icon: '📁', color: '#4facfe', placeholder: '文件名称（如：旅行计划.pdf）' },
+                'music': { text: '分享了一首歌曲', icon: '🎵', color: '#667eea', placeholder: '歌曲名称（如：晴天 - 周杰伦）' }
+            };
+            const t = toolConfig[type];
+            if(t) {
+                // 让用户输入自定义内容
+                const customText = prompt(`请输入${t.text}的描述:`, t.placeholder);
+                if(customText === null) return;
+                
+                displayHtml = `<div style="color:${t.color}; font-weight:bold; font-style:italic;">${t.icon} [${t.text}] ${customText}</div>`;
+                content = `[系统消息：${config.userName} ${t.text}：${customText}]`;
+            }
+        }
+
+        if(content) {
+            appendMessage(config.userName, config.userAvatar, displayHtml, true);
+            config.messages.push({role: 'user', content: content});
+        }
+    }
+
+    // ------------------- 核心：API 回复 -------------------
+    async function generateReply() {
+        const charIndex = charSelect.value;
+        const char = config.characters[charIndex];
+        if(!char) return alert("请先添加角色！");
+
+        showStatus(true);
+
+        // 构建 System Prompt (强制互动)
+        const systemPrompt = `
+        你正在进行一个文字角色扮演游戏。
+        
+        【世界观与背景】：${config.worldview}
+        (注意：如果世界观中提到了其他角色或情敌，请在对话中自然地体现他们的存在或与他们互动。)
+        
+        【长期记忆摘要】：${longTermMemory}
+        【当前扮演角色】：${char.name}
+        【角色设定】：${char.prompt}
+        【你的名字】：${char.name}
+        
+        【行为准则】：
+        1. 必须遵守【回复规则】进行描写。
+        2. 如果玩家发送了工具消息（如转账、链接），请根据角色性格做出真实的反应（惊讶、开心、拒绝等）。
+        3. 如果当前场景中有NPC出现（例如情敌），你必须对NPC的存在做出反应，不要无视他们。
+        
+        【回复规则 - 重要】：
+        ${config.narrationRule}
+        
+        请完全沉浸，不要暴露你是AI。
+        `;
+
+        const history = config.messages.slice(-15); // 取最近15条
+        const messages = [
+            {role: "system", content: systemPrompt},
+            ...history
+        ];
+
+        try {
+            const reply = await callAPI(messages);
+            appendMessage(char.name, char.avatar, reply, false);
+            config.messages.push({role: 'assistant', content: reply});
+            checkMemory();
+        } catch (e) {
+            appendNarrator(`系统错误：无法连接AI (${e.message})`);
+        }
+        
+        showStatus(false);
+    }
+
+    // ------------------- 记忆压缩逻辑 -------------------
+    async function checkMemory() {
+        if (!config.enableMemory) return;
+        
+        if (config.messages.length > 20) {
+            console.log("正在压缩记忆...");
+            const rest = config.messages.slice(10); // 保留后面
+
+            // 这里只是模拟，实际应用中可以调用API来总结 toSummarize 的内容
+            config.messages = rest; 
+            longTermMemory += " ...[随着时间的推移，两人的关系在互动中逐渐加深，发生了一些生活琐事]..."; 
+            
+            const div = document.createElement('div');
+            div.style.fontSize = "10px"; div.style.color="#ccc"; div.style.textAlign="center";
+            div.innerText = "✨ 系统已将旧剧情存入长期记忆 ✨";
+            chatArea.appendChild(div);
+        }
+    }
+
+    async function autoAdvance() {
+        showStatus(true);
+        const systemPrompt = `
+        你是一个旁白系统。
+        【世界观】：${config.worldview}
+        【风格】：${config.plotStyle}
+        【任务】：
+        请根据当前对话记录，自动推进一段剧情。
+        你可以引入突发事件，或者描述环境变化。
+        如果世界观里有“情敌”或“竞争对手”，你可以安排他们偶尔登场或制造麻烦，增加戏剧性。
+        字数300字以内，不要以角色身份说话，只输出旁白。
+        `;
+        
+        const history = config.messages.slice(-10);
+        const messages = [{role: "system", content: systemPrompt}, ...history];
+
+        try {
+            const text = await callAPI(messages);
+            appendNarrator(text);
+            config.messages.push({role: 'system', content: `旁白：${text}`});
+        } catch (e) {
+            appendNarrator("无法生成剧情...");
+        }
+        showStatus(false);
+    }
+
+    // ------------------- NPC 触发逻辑 (含情敌) -------------------
+    async function triggerNPC(type, isRival = false) {
+        toggleNPC();
+        showStatus(true);
+        
+        let specificInstruction = "";
+        if (isRival) {
+            specificInstruction = "这是一个【情敌角色】或【反派角色】。请表现出挑衅、阴阳怪气或者绿茶的行为，试图破坏玩家和当前角色的关系。";
+        } else {
+            specificInstruction = "请根据类型设定这个路人NPC的行为。";
+        }
+
+        const systemPrompt = `
+        【指令】：突然，一个【${type}NPC】闯入了场景。
+        ${specificInstruction}
+        请根据世界观 "${config.worldview}" 生成这个NPC的各种描写。
+        
+        格式要求：
+        第一行：NPC的名字 (随机生成一个符合背景的名字)
+        第二行：描写内容（神态、动作、对玩家或主角的态度）
+        第三行：NPC说的台词
+        
+        NPC必须与当前对话语境相关联，不要自说自话。
+        `;
+        
+        const messages = [
+            {role: "system", content: systemPrompt},
+            ...config.messages.slice(-5)
+        ];
+        
+        try {
+            const raw = await callAPI(messages);
+            appendMessage("NPC / 系统", "https://api.dicebear.com/7.x/identicon/svg?seed=" + Math.random(), raw, false);
+            config.messages.push({role: 'system', content: `NPC事件：${raw}`});
+        } catch (e) { alert(e); }
+        showStatus(false);
+    }
+
+    // ---------------- API 工具函数 ----------------
+    async function callAPI(messages) {
+        if(!config.apiKey) throw new Error("请先设置API Key");
+        
+        const response = await fetch(`${config.apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.apiKey}`
+            },
+            body: JSON.stringify({
+                model: config.model,
+                messages: messages,
+                temperature: 0.8
+            })
+        });
+
+        if(!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || "网络错误");
+        }
+        const data = await response.json();
+        return data.choices[0].message.content;
+    }
+
+    async function fetchModels() {
+        if(!config.apiKey) return alert("请先填写Key");
+        const btn = document.querySelector('#settings-modal .btn-small');
+        btn.innerText = "拉取中...";
+        
+        try {
+            const res = await fetch(`${document.getElementById('api-url').value}/models`, {
+                headers: { 'Authorization': `Bearer ${document.getElementById('api-key').value}` }
+            });
+            const data = await res.json();
+            
+            const select = document.getElementById('api-model');
+            select.innerHTML = ''; 
+            
+            if (data.data && data.data.length > 0) {
+                data.data.sort((a,b) => b.id.localeCompare(a.id));
+                data.data.forEach(model => {
+                    const opt = document.createElement('option');
+                    opt.value = model.id;
+                    opt.text = model.id;
+                    select.appendChild(opt);
+                });
+                alert(`成功！已加载 ${data.data.length} 个模型到下拉框。`);
+            } else {
+                alert("未找到模型，请检查接口。");
+            }
+        } catch(e) {
+            alert("拉取失败，请检查地址和Key");
+        }
+        btn.innerText = "🔄 拉取模型列表";
+    }
+
+    // ---------------- 消息操作核心函数 ----------------
+    function appendMessage(name, avatar, content, isMe) {
+        const msgId = 'msg_' + Date.now() + Math.random().toString(36).substr(2, 9); // 唯一ID
+        const div = document.createElement('div');
+        div.className = `message-group ${isMe ? 'me' : ''}`;
+        div.dataset.id = msgId; // 给消息加唯一标识
+        div.dataset.isMe = isMe; // 标记是否是自己发的消息
+        
+        let finalContent = content;
+        if (!content.trim().startsWith('<div')) {
+            finalContent = formatContent(content);
+        }
+
+        // 增加「操作菜单触发器」+「多选复选框」
+        div.innerHTML = `
+            <div class="avatar-container">
+                <div class="avatar" style="background-image: url('${avatar}');"></div>
+                <div class="char-name">${name}</div>
+            </div>
+            <div class="bubble" style="position:relative;">
+                <div class="msg-checkbox" onclick="toggleMsgSelect('${msgId}', event)"></div>
+                ${finalContent}
+                <div style="position:absolute; right:8px; bottom:4px; opacity:0; transition:opacity 0.2s; font-size:12px; cursor:pointer;" 
+                     onclick="showMsgMenu('${msgId}', event)">
+                    •••
+                </div>
+            </div>
+        `;
+        chatArea.appendChild(div);
+        
+        // 鼠标悬浮显示「•••」按钮
+        div.querySelector('.bubble').addEventListener('mouseenter', function() {
+            this.querySelector('div:last-child').style.opacity = 1;
+        });
+        div.querySelector('.bubble').addEventListener('mouseleave', function() {
+            if (!currentMenu || !currentMenu.contains(this)) {
+                this.querySelector('div:last-child').style.opacity = 0;
+            }
+        });
+
+        scrollToBottom();
+        return msgId; // 返回消息ID，方便后续操作
+    }
+
+    // 显示消息操作菜单
+    function showMsgMenu(msgId, event) {
+        event.stopPropagation();
+        // 关闭已有菜单
+        if (currentMenu) currentMenu.remove();
+        
+        const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+        const isMe = msgEl.dataset.isMe === 'true';
+        const bubbleEl = msgEl.querySelector('.bubble');
+        const rect = bubbleEl.getBoundingClientRect();
+
+        // 创建菜单
+        const menu = document.createElement('div');
+        menu.className = 'msg-menu';
+        menu.style.top = `${rect.bottom + window.scrollY}px`;
+        menu.style.left = `${rect.right - 120 + window.scrollX}px`;
+        currentMenu = menu;
+
+        // 菜单选项（自己发的消息才有「撤回」）
+        const menuItems = [
+            {text: '复制', action: () => copyMsgContent(msgId)},
+            {text: '引用', action: () => quoteMsg(msgId)},
+            ...(isMe ? [{text: '撤回', action: () => recallMsg(msgId)}] : []),
+            {text: '取消', action: () => closeMsgMenu()}
+        ];
+
+        // 渲染菜单选项
+        menuItems.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'msg-menu-item';
+            itemEl.innerText = item.text;
+            itemEl.onclick = () => {
+                item.action();
+                menu.remove();
+                currentMenu = null;
+            };
+            menu.appendChild(itemEl);
+        });
+
+        document.body.appendChild(menu);
+        // 点击其他区域关闭菜单
+        document.addEventListener('click', closeMsgMenu, {once: true});
+    }
+
+    // 关闭消息操作菜单
+    function closeMsgMenu() {
+        if (currentMenu) {
+            currentMenu.remove();
+            currentMenu = null;
+        }
+    }
+
+    // 复制消息内容
+    function copyMsgContent(msgId) {
+        const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+        const content = msgEl.querySelector('.bubble').innerText.trim();
+        navigator.clipboard.writeText(content).then(() => {
+            alert('内容已复制！');
+        });
+    }
+
+    // 引用消息
+    function quoteMsg(msgId) {
+        const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+        const sender = msgEl.querySelector('.char-name').innerText;
+        const content = msgEl.querySelector('.bubble').innerText.trim().replace(/\n/g, ' ');
+        const input = document.getElementById('user-input');
+        input.value = `> ${sender}: ${content}\n${input.value}`;
+        input.focus();
+    }
+
+    // 撤回消息（仅自己发送的消息）
+    function recallMsg(msgId) {
+        const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+        if (confirm('确定撤回这条消息吗？')) {
+            // 替换为“已撤回”提示
+            msgEl.querySelector('.bubble').innerHTML = '<span style="color:#999; font-style:italic;">[消息已撤回]</span>';
+            // 从config.messages中移除（简化版）
+            const msgIndex = config.messages.findIndex(item => item.content.includes(msgEl.querySelector('.char-name').innerText));
+            if (msgIndex > -1) config.messages.splice(msgIndex, 1);
+        }
+    }
+
+    // 切换多选模式
+    function toggleMultiSelect() {
+        multiSelectMode = !multiSelectMode;
+        const checkboxes = document.querySelectorAll('.msg-checkbox');
+        checkboxes.forEach(cb => {
+            cb.classList.toggle('visible', multiSelectMode);
+        });
+        // 显示/隐藏“删除选中”按钮
+        let deleteBtn = document.getElementById('delete-selected-btn');
+        if (multiSelectMode && !deleteBtn) {
+            deleteBtn = document.createElement('button');
+            deleteBtn.id = 'delete-selected-btn';
+            deleteBtn.className = 'btn';
+            deleteBtn.style.background = '#ff5252';
+            deleteBtn.innerText = '删除选中';
+            deleteBtn.onclick = deleteSelectedMsgs;
+            document.querySelector('.input-area').appendChild(deleteBtn);
+        } else if (!multiSelectMode && deleteBtn) {
+            deleteBtn.remove();
+            selectedMsgIds.clear();
+            // 清空选中状态
+            document.querySelectorAll('.msg-checkbox.checked').forEach(cb => {
+                cb.classList.remove('checked');
+            });
+        }
+    }
+
+    // 切换消息选中状态
+    function toggleMsgSelect(msgId, event) {
+        event.stopPropagation();
+        const cb = document.querySelector(`[data-id="${msgId}"] .msg-checkbox`);
+        if (cb.classList.contains('checked')) {
+            cb.classList.remove('checked');
+            selectedMsgIds.delete(msgId);
+        } else {
+            cb.classList.add('checked');
+            selectedMsgIds.add(msgId);
+        }
+    }
+
+    // 删除选中的消息
+    function deleteSelectedMsgs() {
+        if (selectedMsgIds.size === 0) return alert('请选择要删除的消息');
+        if (confirm(`确定删除${selectedMsgIds.size}条消息吗？`)) {
+            selectedMsgIds.forEach(msgId => {
+                const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+                msgEl.remove();
+                // 从config.messages中移除（简化版）
+                const sender = msgEl.querySelector('.char-name').innerText;
+                const msgIndex = config.messages.findIndex(item => item.content.includes(sender));
+                if (msgIndex > -1) config.messages.splice(msgIndex, 1);
+            });
+            selectedMsgIds.clear();
+            toggleMultiSelect(); // 退出多选模式
+        }
+    }
+
+    // ---------------- 辅助函数 ----------------
+    function appendNarrator(text) {
+        const div = document.createElement('div');
+        div.className = 'narrator';
+        div.innerText = text;
+        chatArea.appendChild(div);
+        scrollToBottom();
+    }
+
+    function formatContent(text) {
+        return text.replace(/（(.*?)）/g, '<span style="color:#999; font-size:12px; font-style:italic;">（$1）</span>')
+                   .replace(/\((.*?)\)/g, '<span style="color:#999; font-size:12px; font-style:italic;">($1)</span>')
+                   .replace(/\n/g, '<br>');
+    }
+
+    function scrollToBottom() {
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function showStatus(isLoading) {
+        const bar = document.getElementById('status-bar');
+        bar.style.opacity = isLoading ? 1 : 0;
+    }
+
+    // ---------------- 设置管理 ----------------
+    function openSettings() {
+        document.getElementById('settings-modal').style.display = 'flex';
+        
+        document.getElementById('api-key').value = config.apiKey;
+        document.getElementById('api-url').value = config.apiUrl;
+        
+        const select = document.getElementById('api-model');
+        if (![...select.options].some(o => o.value === config.model)) {
+            const opt = document.createElement('option');
+            opt.value = config.model; opt.text = config.model; opt.selected = true;
+            select.appendChild(opt);
+        } else {
+            select.value = config.model;
+        }
+
+        document.getElementById('world-setting').value = config.worldview;
+        document.getElementById('plot-style').value = config.plotStyle;
+        document.getElementById('user-name').value = config.userName;
+        document.getElementById('user-avatar').value = config.userAvatar;
+        document.getElementById('chat-title-input').value = document.getElementById('ui-title').innerText;
+        
+        document.getElementById('narration-prompt').value = config.narrationRule;
+        document.getElementById('memory-toggle').checked = config.enableMemory;
+
+        renderCharSettings();
+    }
+
+    function closeSettings() {
+        document.getElementById('settings-modal').style.display = 'none';
+    }
+
+    function saveSettings() {
+        config.apiKey = document.getElementById('api-key').value;
+        config.apiUrl = document.getElementById('api-url').value;
+        config.model = document.getElementById('api-model').value;
+        config.worldview = document.getElementById('world-setting').value;
+        config.plotStyle = document.getElementById('plot-style').value;
+        config.userName = document.getElementById('user-name').value;
+        config.userAvatar = document.getElementById('user-avatar').value;
+        config.narrationRule = document.getElementById('narration-prompt').value;
+        config.enableMemory = document.getElementById('memory-toggle').checked;
+
+        const bg = document.getElementById('bg-img-input').value;
+        if(bg) document.body.style.backgroundImage = `url('${bg}'), var(--gradient-bg)`;
+        document.body.style.backgroundSize = "cover";
+
+        document.getElementById('ui-title').innerText = document.getElementById('chat-title-input').value;
+
+        updateCharSelect();
+        closeSettings();
+        alert("设置已保存 ✨");
+    }
+
+    function addNewChar() {
+        config.characters.push({name: '新角色', avatar: '', prompt: ''});
+        renderCharSettings();
+    }
+    function removeChar(index) {
+        if(confirm("确定删除这个角色吗？")) {
+            config.characters.splice(index, 1);
+            renderCharSettings();
+        }
+    }
+    window.updateChar = function(index, key, value) {
+        config.characters[index][key] = value;
+    }
+
+    function toggleNPC() {
+        npcMenu.style.display = npcMenu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    init();
+</script>
+</body>
+</html>
